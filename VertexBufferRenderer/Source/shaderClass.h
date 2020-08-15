@@ -1,5 +1,6 @@
 #pragma once
 #include<string>
+#include"verticies.h"
 
 class shader
 {
@@ -12,6 +13,9 @@ public:
 
 	void bind()const;
 	void unbind()const;
+
+	int uniformPrep();
+	void setUniformWithVerticy(verticyBuffer* vert, int location);
 
 	std::string parse(std::string shaderTypeName);
 };

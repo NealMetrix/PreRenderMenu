@@ -9,10 +9,10 @@
 shader::shader(std::string filePath)
 	:m_filePath(filePath)
 {
-	m_sRender = glCreateProgram();
+	GLcheckError(m_sRender = glCreateProgram());
 
-	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	GLcheckError(unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER));
+	GLcheckError(unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER));
 
 	std::string vertexSource = parse("Vertex");
 	std::string fragmentSource = parse("Fragment");
@@ -20,24 +20,25 @@ shader::shader(std::string filePath)
 	const char* vSrcPtr = &vertexSource[0];
 	const char* fSrcPtr = &fragmentSource[0];
 
-	glShaderSource(vertexShader, 1, &vSrcPtr, NULL);
-	glShaderSource(fragmentShader, 1, &fSrcPtr, NULL);
+	GLcheckError(glShaderSource(vertexShader, 1, &vSrcPtr, NULL));
+	GLcheckError(glShaderSource(fragmentShader, 1, &fSrcPtr, NULL));
 
-	glCompileShader(vertexShader);
-	glCompileShader(fragmentShader);
 
-	glAttachShader(m_sRender, vertexShader);
-	glAttachShader(m_sRender, fragmentShader);
+	GLcheckError(glCompileShader(vertexShader));
+	GLcheckError(glCompileShader(fragmentShader));
 
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	GLcheckError(glAttachShader(m_sRender, vertexShader));
+	GLcheckError(glAttachShader(m_sRender, fragmentShader));
 
-	glLinkProgram(m_sRender);
-	glValidateProgram(m_sRender);
+	GLcheckError(glDeleteShader(vertexShader));
+	GLcheckError(glDeleteShader(fragmentShader));
+	
+	GLcheckError(glLinkProgram(m_sRender));
+	GLcheckError(glValidateProgram(m_sRender));	
 }
 shader::~shader()
 {
-	glDeleteProgram(m_sRender);
+	GLcheckError(glDeleteProgram(m_sRender));
 }
 
 std::string shader::parse(std::string shaderTypeName)
@@ -78,9 +79,29 @@ std::string shader::parse(std::string shaderTypeName)
 
 void shader::bind()const
 {
-	glUseProgram(m_sRender);
+	GLcheckError(glUseProgram(m_sRender));
 }
 void shader::unbind()const
 {
-	glUseProgram(0);
+	GLcheckError(glUseProgram(0));
 }
+
+int shader::uniformPrep()
+{
+
+	GLcheckError(int uniformLocation = glGetUniformLocation(m_sRender,"vertColor"));
+
+	return uniformLocation;
+}
+void shader::setUniformWithVerticy(verticyBuffer* vert , int location)
+{
+	float* colorPtr = (vert->colorPoint);
+	float vColor[4] =
+	{
+		*(colorPtr + 0), *(colorPtr + 1), *(colorPtr + 2), *(colorPtr + 3)
+	};
+	GLcheckError(glUniform4f(location,vColor[0],vColor[1],vColor[2],vColor[3]));
+}
+/*Maybe this function should have just had the user set the color with an action and this
+was a buffer pointer instead of a *vert as this would be better optimization. It just felt like
+it made sense at the time... But I should probably change how the action works.*/

@@ -28,13 +28,16 @@ int main()
     the coordinate input in the y value before it does x. I could store them in variables before they are called that*/
     verticyBuffer shapeDrawer;
     std::string userinput = "";
-    while (userinput != "generate")
+    while (userinput != "generate" && userinput != "quit")
     {
         std::cout << "What action would you like to perform on your shapes" << std::endl;
         std::cout << "Enter help for possible actions" << std::endl << std::endl;
         std::cin >> userinput;
         action(userinput, shapeDrawer);
     }
+    if (userinput == "quit")
+        return 0;
+
     GLFWwindow* window;
 
     /* Initialize the library */
@@ -53,73 +56,42 @@ int main()
     glfwMakeContextCurrent(window);
 
     int initGlewValue = glewInit();
-    //std::cout << (initGlewValue == GLEW_OK) << std::endl;/*Debugging code to be sure glew is initialized properly.*/
 
-    float verticyPositions[] =
-    {
-        0.0f, 0.0f,
-        -0.5f,-0.5f,
-        0.5f, -0.5f
-    };
-
-    unsigned int indexBufferTest[] =
-    {
-        0,1,2
-    };
-    /*I need to find a way to generate an array with the vectors that I have created. I could make it so I have a function that
-    creates the buffer. But then I would risk using unallocated memory. So how do I generate it this memory. Let's try creating
-    some sort of method that generates a heap allocated array and returns the pointer to the heap memory. I'll see if I can use
-    a type vertex buffer for now.*/
-    //vertex* vertexBufferPtr=verticyGeneratedBuffer(shapeDrawer);
-    //unsigned int* indexBufferPtr = indicyGeneratedBuffer(shapeDrawer);'
-    //Code temporarily disabled until it's solved.
-    /*All of this is valid code.*/
-    unsigned int i =1;
-    unsigned int floor[2] = { 0,1 };
-    unsigned int p = shapeDrawer.getIndices().at(i);
-    floor[0] = p;
-    //floor[0] = shapeDrawer.getVerticies()[*ptr].xCoordinate;
-
-    /*std::cout << "Verticies" << std::endl;
-    for (int i = 0; i < sizeof(*verticyPositions); i++)
-        vertexBufferPtr[i].printCoordinates();
-
-    std::cout << std::endl << "IndexBuffer elements" << std::endl;
-    for (int i = 0; i < sizeof(*indexBufferPtr); i++)
-        std::cout << indexBufferPtr[i] << std::endl;
-        */
-    /*Now how do I want to use the index buffer. The big thing is giving the person the ability to reorder how the index buffer
-    is drawn. Let's try and create something similar as we made with the vertexes but for the index buffer*/
     shader testShader("Shaders/testShader.shader");
+    int uniLocation = testShader.uniformPrep();/*This needs to be function before program is ever bound... Look at glGetUniformLocation documentation for mor details*/
     testShader.bind();
+    testShader.setUniformWithVerticy(&shapeDrawer, uniLocation);/*This needs to be called after the shader has become part of the current state.
+                                                                Check glUniform documentation for more details*/
 
     unsigned int vertexArrayTester;
-    glGenVertexArrays(1, &vertexArrayTester);
-    glBindVertexArray(vertexArrayTester);
+    GLcheckError(glGenVertexArrays(1, &vertexArrayTester));
+    GLcheckError(glBindVertexArray(vertexArrayTester));
 
     unsigned int testBuffer;
     glGenBuffers(1, &testBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER,testBuffer);
-    glBufferData(GL_ARRAY_BUFFER, 3 * 2 * sizeof(float), verticyPositions, GL_STATIC_DRAW);
+    GLcheckError(glBindBuffer(GL_ARRAY_BUFFER,testBuffer));
+    GLcheckError(glBufferData(GL_ARRAY_BUFFER, shapeDrawer.getVerticies().size() * sizeof(vertex), shapeDrawer.getVerticies().data(), GL_STATIC_DRAW));
     /*Remember that when using glBUfferData it assigns memory and data based on what is currently bound.
     This means that this function won't work and/or will activate/change the data of the wrong buffer.
     I believe that if you want to do it with a buffer that isn't bound you can use the function glNamedBufferData*/
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    GLcheckError(glEnableVertexAttribArray(0));
+    GLcheckError(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr));
 
     unsigned int indexTester;
-    glGenBuffers(1, &indexTester);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexTester);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(unsigned int), indexBufferTest, GL_STATIC_DRAW);
+    GLcheckError(glGenBuffers(1, &indexTester));
+    GLcheckError(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexTester));
+    GLcheckError(glBufferData(GL_ELEMENT_ARRAY_BUFFER, shapeDrawer.getIndices().size() * sizeof(unsigned int), shapeDrawer.getIndices().data(), GL_STATIC_DRAW));
+    /*Use getIndeces instead of trying to create a refrence to the vector data. It seems like that might matter.
+    Maybe to understand why OpenGL doesn't work with a vector refrence think through what that would actually mean if we pass that in for our buffer data*/
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLcheckError(glClear(GL_COLOR_BUFFER_BIT));
 
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, NULL);
+        GLcheckError(glDrawElements(GL_TRIANGLES, shapeDrawer.getIndices().size(), GL_UNSIGNED_INT, NULL));
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

@@ -37,12 +37,35 @@ static void createVertex(verticyBuffer& v)
 
     return;
 }
+static void genColorBuffer(verticyBuffer& v)
+{
+    float rgbColorArray[4];
+    rgbColorArray[3] = 1.0f;
+
+    std::cout << "Enter RED value" << std::endl;
+    std::cin >> rgbColorArray[0];
+    std::cout << std::endl;
+
+    std::cout << "Enter GREEN value" << std::endl;
+    std::cin >> rgbColorArray[1];
+    std::cout << std::endl;
+
+    std::cout << "Enter BLUE value" << std::endl;
+    std::cin >> rgbColorArray[2];
+    std::cout << std::endl;
+
+    if ((rgbColorArray[0]>1 && rgbColorArray[0] < 0) || (rgbColorArray[1]>1 && rgbColorArray[1] < 0) || (rgbColorArray[2] > 1 && rgbColorArray[2] < 0))
+        std::cout << "Warning: Color Values Out of Bounds" << std::endl;
+
+    for (unsigned int i = 0; i < sizeof(rgbColorArray)/sizeof(float); i++)
+        *((v.colorPoint) + i) = rgbColorArray[i];
+}
 static void deleteLastVector(verticyBuffer& v)
 {
 
     /*Handeling the exception when you delete a vertex and then never change the order by clearing it so the order doesn't
     try and access an element of the verticies vector that has already been deleted.*/
-    if (v.getVerticiesSize() <= v.order.size())
+    if (v.getVerticies().size() <= v.getIndices().size()+1)
     {
         v.clearOrder();
         std::cout << "Order exceeded vertex value. Order cleared..." << std::endl;
@@ -76,7 +99,7 @@ static void reorder(verticyBuffer& pushto)
     while(orderInput!=0)
     {
         /*Making sure you can't enter a greater verticy number than you have verticies*/
-        if (orderInput >= pushto.getVerticiesSize()+1)
+        if (orderInput >= pushto.getVerticies().size()+1)
         {
             std::cout << "Error max vertex exceeded... Deordering verticies" << std::endl;
             pushto.clearOrder();
@@ -101,6 +124,9 @@ static unsigned int action(std::string& entry, verticyBuffer& verticies)
     case createV:
         createVertex(verticies);
         break;
+    case colorV:
+        genColorBuffer(verticies);
+        break;
     case deleteV:
         deleteLastVector(verticies);
         break;
@@ -115,6 +141,9 @@ static unsigned int action(std::string& entry, verticyBuffer& verticies)
         break;
     case helpV:
         help();
+        break;
+    case quitV:
+        std::cout << "Exiting Program" << std::endl;
         break;
     case reorderV:
         reorder(verticies);

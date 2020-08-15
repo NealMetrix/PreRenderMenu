@@ -15,8 +15,9 @@ read <#>Shader in the comments and then read active if Vertex is on the same lin
 #version 330
 
 layout(location = 0) out vec4 color;
+uniform vec4 vertColor;
 
 void main()
 {
-	color = vec4(0.0, 0.6, 0.0, 1.0);
+	color = vertColor;
 }
